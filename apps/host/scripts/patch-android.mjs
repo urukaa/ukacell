@@ -13,6 +13,9 @@
 //   2. app/build.gradle.kts
 //      - release signing from gen/android/keystore.properties, when present
 //      - the cleartext manifest placeholder forced on for release builds
+//   3. build.gradle.kts (root)
+//      - plugins that pin compileSdk below what :tauri-android needs (36) are
+//        raised to the app's compileSdk (tauri-plugin-torch 0.1.0 pins 34)
 //
 // Usage: node scripts/patch-android.mjs [--android-dir <path>]
 
@@ -158,18 +161,7 @@ const PROPERTIES_IMPORT = "import java.util.Properties";
 
 function patchGradle(path) {
   const original = readFileSync(path, "utf8");
-  const begin = original.indexOf(GRADLE_BEGIN);
-  let gradle;
-  if (begin === -1) {
-    gradle = original.replace(/\s*$/, "\n\n") + GRADLE_BLOCK;
-  } else {
-    const end = original.indexOf(GRADLE_END, begin);
-    if (end === -1) {
-      throw new Error(`${path} has the ukacell start marker but no end marker; fix it by hand`);
-    }
-    const afterEnd = original.indexOf("\n", end);
-    gradle = original.slice(0, begin) + GRADLE_BLOCK + (afterEnd === -1 ? "" : original.slice(afterEnd + 1));
-  }
+  let gradle = upsertBlock(path, original, GRADLE_BEGIN, GRADLE_END, GRADLE_BLOCK);
   if (!new RegExp(`^${PROPERTIES_IMPORT.replace(/\./g, "\\.")}\\s*$`, "m").test(gradle)) {
     gradle = `${PROPERTIES_IMPORT}\n${gradle}`;
   }
@@ -180,12 +172,72 @@ function patchGradle(path) {
   return [];
 }
 
+// Appends `block` to `source`, or replaces the copy between `begin` and `end`
+// markers when one is already there.
+function upsertBlock(path, source, begin, end, block) {
+  const start = source.indexOf(begin);
+  if (start === -1) {
+    return source.replace(/\s*$/, "\n\n") + block;
+  }
+  const stop = source.indexOf(end, start);
+  if (stop === -1) {
+    throw new Error(`${path} has the ukacell start marker but no end marker; fix it by hand`);
+  }
+  const afterEnd = source.indexOf("\n", stop);
+  return source.slice(0, start) + block + (afterEnd === -1 ? "" : source.slice(afterEnd + 1));
+}
+
+const ROOT_GRADLE_BEGIN = "// >>> ukacell: minimum plugin compileSdk (managed by scripts/patch-android.mjs)";
+const ROOT_GRADLE_END = "// <<< ukacell";
+const MIN_PLUGIN_COMPILE_SDK = 36;
+
+// :tauri-android requires every library that depends on it to compile against
+// android-${MIN_PLUGIN_COMPILE_SDK}+, but some community plugins pin an older
+// compileSdk (tauri-plugin-torch 0.1.0 uses 34) and live in the Cargo registry,
+// where they cannot be edited. finalizeDsl runs after the plugin's own
+// build.gradle.kts, so this override wins. Plugins are raised to the app's
+// compileSdk, which is already installed, so no extra SDK platform is needed.
+function rootGradleBlock(targetSdk) {
+  return `${ROOT_GRADLE_BEGIN}
+// Some community plugins (e.g. tauri-plugin-torch) pin a compileSdk below the
+// ${MIN_PLUGIN_COMPILE_SDK} that :tauri-android requires; raise them to the app's compileSdk.
+subprojects {
+    plugins.withId("com.android.library") {
+        extensions.configure<com.android.build.api.variant.LibraryAndroidComponentsExtension> {
+            finalizeDsl {
+                val current = it.compileSdk ?: 0
+                if (current < ${MIN_PLUGIN_COMPILE_SDK}) {
+                    it.compileSdk = ${targetSdk}
+                    logger.lifecycle("ukacell: \${project.path} compileSdk \$current -> ${targetSdk}")
+                }
+            }
+        }
+    }
+}
+${ROOT_GRADLE_END}
+`;
+}
+
+function patchRootGradle(path, appGradlePath) {
+  const match = readFileSync(appGradlePath, "utf8").match(/^\s*compileSdk\s*=\s*(\d+)/m);
+  const appCompileSdk = match ? Number(match[1]) : 0;
+  const targetSdk = Math.max(appCompileSdk, MIN_PLUGIN_COMPILE_SDK);
+  const original = readFileSync(path, "utf8");
+  const gradle = upsertBlock(path, original, ROOT_GRADLE_BEGIN, ROOT_GRADLE_END, rootGradleBlock(targetSdk));
+  if (gradle !== original) {
+    writeFileSync(path, gradle);
+    return [`plugin compileSdk >= ${MIN_PLUGIN_COMPILE_SDK}`];
+  }
+  return [];
+}
+
 function main() {
   const { androidDir } = parseArgs(process.argv.slice(2));
   const manifestPath = join(androidDir, "app", "src", "main", "AndroidManifest.xml");
   const gradlePath = join(androidDir, "app", "build.gradle.kts");
+  const rootGradlePath = join(androidDir, "build.gradle.kts");
 
-  for (const path of [manifestPath, gradlePath]) {
+  for (const path of [manifestPath, gradlePath, rootGradlePath]) {
     if (!existsSync(path)) {
       console.error(`Not found: ${path}`);
       console.error("Run `npm run android:init` (tauri android init) in apps/host first.");
@@ -193,7 +245,11 @@ function main() {
     }
   }
 
-  const changes = [...patchManifest(manifestPath), ...patchGradle(gradlePath)];
+  const changes = [
+    ...patchManifest(manifestPath),
+    ...patchGradle(gradlePath),
+    ...patchRootGradle(rootGradlePath, gradlePath),
+  ];
   if (changes.length === 0) {
     console.log("patch-android: already up to date");
   } else {
