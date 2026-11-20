@@ -313,7 +313,7 @@ instead of opening a public issue.
 
 ## Building the host from source
 
-Prerequisites: Node.js 18.18+, Rust 1.90+, and for Android: JDK 17, Android
+Prerequisites: Node.js 18.18+, Rust 1.90+, and for Android: JDK 17+, Android
 SDK and NDK 27 with `ANDROID_HOME` / `NDK_HOME` set. For iOS: macOS with
 Xcode. The [Tauri prerequisites guide](https://v2.tauri.app/start/prerequisites/)
 covers the setup.
@@ -352,7 +352,7 @@ git tag v0.1.0
 git push origin v0.1.0
 ```
 
-The workflow installs Rust (all four Android targets), Java 17, the Android
+The workflow installs Rust (all four Android targets), Java 21, the Android
 SDK and NDK 27. It stamps the tag's version into `tauri.conf.json` and runs
 `tauri android init` if `src-tauri/gen/android` is not committed. Then it
 generates icons, patches the manifest, runs `tauri android build --apk` and

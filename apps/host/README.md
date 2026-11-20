@@ -30,7 +30,7 @@ apps/host/
 | --- | --- |
 | Node.js | 18.18 or newer |
 | Rust | 1.90 or newer (`rustup update stable`) |
-| Android | Android Studio or the command-line SDK, NDK 27, JDK 17 |
+| Android | Android Studio or the command-line SDK, NDK 27, JDK 17+ |
 | iOS | macOS with Xcode 15+ and CocoaPods |
 
 Follow the official [Tauri prerequisites](https://v2.tauri.app/start/prerequisites/)
