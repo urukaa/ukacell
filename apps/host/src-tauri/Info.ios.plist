@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Merged by the Tauri CLI into the generated iOS Info.plist
+  (src-tauri/gen/apple/ukacell_iOS/Info.plist) on `tauri ios init/dev/build`.
+-->
+<plist version="1.0">
+<dict>
+  <key>NSCameraUsageDescription</key>
+  <string>Ukacell uses the camera to scan the QR code shown by `npx ukacell`, and lets the app you are developing use it.</string>
+
+  <key>NSLocationWhenInUseUsageDescription</key>
+  <string>The app you are developing in Ukacell requested your location.</string>
+
+  <key>NSFaceIDUsageDescription</key>
+  <string>The app you are developing in Ukacell requested Face ID authentication.</string>
+
+  <key>NFCReaderUsageDescription</key>
+  <string>The app you are developing in Ukacell requested to read or write NFC tags.</string>
+
+  <key>NSLocalNetworkUsageDescription</key>
+  <string>Ukacell connects to the dev server running on your computer over the local network.</string>
+
+  <key>NSAppTransportSecurity</key>
+  <dict>
+    <!-- Dev servers are plain http:// on the LAN. -->
+    <key>NSAllowsLocalNetworking</key>
+    <true/>
+    <key>NSAllowsArbitraryLoadsInWebContent</key>
+    <true/>
+  </dict>
+</dict>
+</plist>

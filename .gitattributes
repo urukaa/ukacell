@@ -1,0 +1,10 @@
+# Keep LF in the repo and in checkouts so shell scripts (gradlew) run on Linux CI.
+* text=auto eol=lf
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+*.png binary
+*.jpg binary
+*.ico binary
+*.icns binary
+*.jar binary

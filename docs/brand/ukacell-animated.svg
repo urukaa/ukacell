@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <title>Ukacell: a phone divides from the laptop like a cell</title>
+  <defs>
+    <!-- Gooey filter: shapes that touch melt together like a dividing cell. -->
+    <filter id="goo" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="14" result="blur" />
+      <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 26 -11" />
+    </filter>
+  </defs>
+  <rect width="512" height="512" rx="115" fill="#171615" />
+  <g transform="translate(256 256) scale(0.72) translate(-256 -274)">
+    <!-- 1-2: one screen; a phone buds off and slides out, melting like a cell -->
+    <g filter="url(#goo)">
+      <animate attributeName="opacity" dur="4s" repeatCount="indefinite" keyTimes="0;0.5;0.58;0.9;1" values="1;1;0;0;1" />
+      <rect x="82" y="126" width="280" height="212" rx="32" fill="#EEEBE6" />
+      <rect x="282" y="206" width="148" height="216" rx="32" fill="#38BDF8">
+        <animateTransform attributeName="transform" type="translate" dur="4s" repeatCount="indefinite"
+          keyTimes="0;0.12;0.48;1" values="-150 -64;-150 -64;0 0;0 0"
+          calcMode="spline" keySplines="0 0 1 1;0.55 0 0.2 1;0 0 1 1" />
+      </rect>
+    </g>
+    <!-- 3: it locks into the crisp mark -->
+    <g opacity="0">
+      <animate attributeName="opacity" dur="4s" repeatCount="indefinite" keyTimes="0;0.5;0.58;0.9;1" values="0;0;1;1;0" />
+      <path fill="#EEEBE6" fill-rule="evenodd" d="M114 126 H330 A32 32 0 0 1 362 158 V306 A32 32 0 0 1 330 338 H114 A32 32 0 0 1 82 306 V158 A32 32 0 0 1 114 126 Z M314 206 H362 V306 A32 32 0 0 1 330 338 H282 V238 A32 32 0 0 1 314 206 Z" />
+      <path fill="#38BDF8" fill-rule="evenodd" d="M314 206 H398 A32 32 0 0 1 430 238 V390 A32 32 0 0 1 398 422 H314 A32 32 0 0 1 282 390 V238 A32 32 0 0 1 314 206 Z M314 206 H362 V306 A32 32 0 0 1 330 338 H282 V238 A32 32 0 0 1 314 206 Z" />
+    </g>
+  </g>
+</svg>

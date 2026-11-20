@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Ukacell Playground</title>
+    <link rel="stylesheet" href="style.css" />
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    <header class="top">
+      <h1>Ukacell Playground</h1>
+      <p class="sub">Each button calls a native plugin through <code>window.__TAURI__</code>.</p>
+      <p class="banner" id="no-tauri" hidden>
+        <code>window.__TAURI__</code> is missing. Open this page from the Ukacell app on your phone
+        (scan the QR code from <code>npx ukacell</code>).
+      </p>
+    </header>
+
+    <main class="grid" id="tests"></main>
+
+    <section class="log-panel" aria-labelledby="log-title">
+      <div class="log-head">
+        <h2 id="log-title">Results</h2>
+        <button type="button" class="link" id="clear-log">Clear</button>
+      </div>
+      <ol class="log" id="log" aria-live="polite"></ol>
+    </section>
+  </body>
+</html>

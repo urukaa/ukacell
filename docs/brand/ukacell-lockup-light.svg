@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 318 96" width="318" height="96">
+  <title>Ukacell</title>
+  <g transform="translate(4 12) scale(0.2365) translate(-82 -126)">
+    <path fill="#1C1B19" fill-rule="evenodd" d="M114 126 H330 A32 32 0 0 1 362 158 V306 A32 32 0 0 1 330 338 H114 A32 32 0 0 1 82 306 V158 A32 32 0 0 1 114 126 Z M314 206 H362 V306 A32 32 0 0 1 330 338 H282 V238 A32 32 0 0 1 314 206 Z" />
+    <path fill="#0EA5E9" fill-rule="evenodd" d="M314 206 H398 A32 32 0 0 1 430 238 V390 A32 32 0 0 1 398 422 H314 A32 32 0 0 1 282 390 V238 A32 32 0 0 1 314 206 Z M314 206 H362 V306 A32 32 0 0 1 330 338 H282 V238 A32 32 0 0 1 314 206 Z" />
+  </g>
+  <text x="104" y="70" fill="#1C1B19" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif"
+        font-size="68" font-weight="700" letter-spacing="-3">ukacell</text>
+</svg>

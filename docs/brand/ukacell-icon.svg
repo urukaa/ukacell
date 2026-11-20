@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <title>Ukacell</title>
+  <rect width="512" height="512" rx="115" fill="#171615" />
+  <g transform="translate(256 256) scale(0.72) translate(-256 -274)">
+    <path fill="#EEEBE6" fill-rule="evenodd" d="M114 126 H330 A32 32 0 0 1 362 158 V306 A32 32 0 0 1 330 338 H114 A32 32 0 0 1 82 306 V158 A32 32 0 0 1 114 126 Z M314 206 H362 V306 A32 32 0 0 1 330 338 H282 V238 A32 32 0 0 1 314 206 Z" />
+    <path fill="#38BDF8" fill-rule="evenodd" d="M314 206 H398 A32 32 0 0 1 430 238 V390 A32 32 0 0 1 398 422 H314 A32 32 0 0 1 282 390 V238 A32 32 0 0 1 314 206 Z M314 206 H362 V306 A32 32 0 0 1 330 338 H282 V238 A32 32 0 0 1 314 206 Z" />
+  </g>
+</svg>

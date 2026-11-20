@@ -1,0 +1,45 @@
+{
+  "name": "ukacell",
+  "version": "0.1.0",
+  "description": "Show a QR code for your local dev server so the Ukacell host app can open your Tauri v2 frontend on a phone.",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "ukacell": "bin/cli.js"
+  },
+  "files": [
+    "bin",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18.18"
+  },
+  "keywords": [
+    "tauri",
+    "tauri-v2",
+    "mobile",
+    "android",
+    "ios",
+    "qr",
+    "dev-server",
+    "hot-reload"
+  ],
+  "homepage": "https://github.com/urukaa/ukacell/tree/main/packages/cli#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/urukaa/ukacell.git",
+    "directory": "packages/cli"
+  },
+  "bugs": {
+    "url": "https://github.com/urukaa/ukacell/issues"
+  },
+  "scripts": {
+    "start": "node bin/cli.js",
+    "check": "node --check bin/cli.js && node bin/cli.js --help"
+  },
+  "dependencies": {
+    "picocolors": "^1.1.1",
+    "qrcode-terminal": "^0.12.0"
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "name": "ukacell-monorepo",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Ukacell: the mobile dev companion for Tauri v2, plus the ukacell CLI",
+  "license": "MIT",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "host:dev": "npm run dev --workspace apps/host",
+    "host:android:init": "npm run android:init --workspace apps/host",
+    "host:android:dev": "npm run android:dev --workspace apps/host",
+    "host:android:build": "npm run android:build --workspace apps/host",
+    "host:ios:init": "npm run ios:init --workspace apps/host",
+    "host:ios:dev": "npm run ios:dev --workspace apps/host",
+    "cli": "node packages/cli/bin/cli.js",
+    "playground": "cd examples/playground && node ../../packages/cli/bin/cli.js --run",
+    "cli:check": "npm run check --workspace packages/cli"
+  },
+  "engines": {
+    "node": ">=18.18"
+  }
+}

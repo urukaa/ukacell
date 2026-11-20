@@ -1,0 +1,17 @@
+{
+  "$schema": "../../gen/schemas/desktop-schema.json",
+  "identifier": "remote-dev-stronghold",
+  "description": "Stronghold access for the same dev-server origins as remote-dev.json. Only loaded when the host is built with `--features stronghold` (see build.rs).",
+  "local": false,
+  "windows": ["main"],
+  "remote": {
+    "urls": [
+      "http://localhost:*/*",
+      "http://127.0.0.1:*/*",
+      "http://(192\\.168\\.\\d{1,3}\\.\\d{1,3}):*/*",
+      "http://(10\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}):*/*",
+      "http://(172\\.(?:1[6-9]|2\\d|3[01])\\.\\d{1,3}\\.\\d{1,3}):*/*"
+    ]
+  },
+  "permissions": ["stronghold:default"]
+}

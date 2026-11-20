@@ -1,0 +1,11 @@
+{
+  "name": "ukacell-playground",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A one-page app with a button for each native plugin bundled in the Ukacell host",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "dev": "node server.mjs"
+  }
+}

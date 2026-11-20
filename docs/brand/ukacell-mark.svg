@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="82 126 348 296" width="348" height="296">
+  <title>Ukacell mark</title>
+  <!-- A laptop screen and a phone; their overlap is knocked out. -->
+  <path fill="#1C1B19" fill-rule="evenodd" d="M114 126 H330 A32 32 0 0 1 362 158 V306 A32 32 0 0 1 330 338 H114 A32 32 0 0 1 82 306 V158 A32 32 0 0 1 114 126 Z M314 206 H362 V306 A32 32 0 0 1 330 338 H282 V238 A32 32 0 0 1 314 206 Z" />
+  <path fill="#0EA5E9" fill-rule="evenodd" d="M314 206 H398 A32 32 0 0 1 430 238 V390 A32 32 0 0 1 398 422 H314 A32 32 0 0 1 282 390 V238 A32 32 0 0 1 314 206 Z M314 206 H362 V306 A32 32 0 0 1 330 338 H282 V238 A32 32 0 0 1 314 206 Z" />
+</svg>

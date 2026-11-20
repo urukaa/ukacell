@@ -1,0 +1,25 @@
+{
+  "name": "@ukacell/host",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Ukacell mobile host app (Tauri v2)",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "tauri": "tauri",
+    "dev": "tauri dev",
+    "icons": "tauri icon app-icon.png",
+    "android:init": "tauri android init && tauri icon app-icon.png && node scripts/patch-android.mjs",
+    "android:patch": "node scripts/patch-android.mjs",
+    "android:dev": "node scripts/run-android.mjs",
+    "android:dev:emulator": "node scripts/run-android.mjs --target x86_64",
+    "android:dev:live": "node scripts/patch-android.mjs && tauri android dev",
+    "android:build": "node scripts/patch-android.mjs && tauri android build --apk",
+    "ios:init": "tauri ios init && tauri icon app-icon.png",
+    "ios:dev": "tauri ios dev",
+    "ios:build": "tauri ios build"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.12.6"
+  }
+}

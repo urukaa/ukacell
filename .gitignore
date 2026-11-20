@@ -1,0 +1,28 @@
+# Dependencies
+node_modules/
+
+# Rust / Tauri build output
+target/
+apps/host/src-tauri/gen/schemas/
+
+# Android signing material
+keystore.properties
+*.jks
+*.keystore
+
+# Build artifacts
+dist/
+*.apk
+*.aab
+*.ipa
+
+# Logs
+npm-debug.log*
+*.log
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json

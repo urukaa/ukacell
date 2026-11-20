@@ -1,0 +1,73 @@
+[package]
+name = "ukacell"
+version = "0.1.0"
+description = "Ukacell: the mobile dev companion for Tauri v2 apps"
+authors = ["Ukacell contributors"]
+license = "MIT"
+repository = "https://github.com/urukaa/ukacell"
+edition = "2021"
+# The newest official plugins are built with the 2024 edition and need Rust 1.90+.
+rust-version = "1.90"
+
+[lib]
+# The `_lib` suffix keeps the library name distinct from the binary name,
+# which avoids a known Cargo issue on Windows (rust-lang/cargo#8519).
+name = "ukacell_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2.7.6", features = [] }
+
+[dependencies]
+tauri = { version = "2.12.7", features = [] }
+serde_json = "1"
+log = "0.4"
+
+# Hardware & sensors.
+# barcode-scanner and nfc compile to empty crates on desktop; biometric,
+# geolocation, haptics and torch ship desktop stubs. All six are only
+# registered on mobile (see `#[cfg(mobile)]` in src/lib.rs), but they stay
+# plain dependencies so their permissions are known on every target and the
+# capability files validate during a desktop build too.
+tauri-plugin-barcode-scanner = "2.5.3"
+tauri-plugin-biometric = "2.5.0"
+tauri-plugin-geolocation = "2.5.0"
+tauri-plugin-haptics = "2.4.2"
+tauri-plugin-nfc = "2.4.2"
+# Community plugin (not part of tauri-apps/plugins-workspace).
+tauri-plugin-torch = "0.1.0"
+
+# Storage & data.
+tauri-plugin-fs = "2.7.1"
+tauri-plugin-store = "2.5.1"
+tauri-plugin-sql = { version = "2.6.0", features = ["sqlite"] }
+# Optional: its libsodium dependency can only be cross-compiled for Android
+# from Linux/macOS (it runs `./configure`). Release builds in CI enable it with
+# `--features stronghold`; local Android builds on Windows leave it out.
+tauri-plugin-stronghold = { version = "2.4.0", optional = true }
+
+# System & UI.
+tauri-plugin-notification = "2.8.1"
+tauri-plugin-dialog = "2.8.4"
+tauri-plugin-clipboard-manager = "2.5.0"
+tauri-plugin-opener = "2.7.3"
+tauri-plugin-deep-link = "2.6.3"
+tauri-plugin-os = "2.4.0"
+tauri-plugin-log = "2.10.2"
+
+# Networking.
+tauri-plugin-http = "2.9.0"
+tauri-plugin-websocket = "2.5.0"
+tauri-plugin-upload = "2.5.0"
+
+[features]
+default = []
+# Bundles tauri-plugin-stronghold and its capability (capabilities/stronghold/).
+stronghold = ["dep:tauri-plugin-stronghold"]
+
+[profile.release]
+codegen-units = 1
+lto = "thin"
+opt-level = "s"
+panic = "abort"
+strip = true
