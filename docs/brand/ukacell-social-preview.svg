@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 640" width="1280" height="640">
+  <title>Ukacell: your Tauri v2 frontend on a real phone</title>
+  <rect width="1280" height="640" fill="#171615" />
+  <!-- Mark: the laptop and phone from ukacell-mark.svg, at full size -->
+  <g transform="translate(112 172) translate(-82 -126)">
+    <path fill="#EEEBE6" fill-rule="evenodd" d="M114 126 H330 A32 32 0 0 1 362 158 V306 A32 32 0 0 1 330 338 H114 A32 32 0 0 1 82 306 V158 A32 32 0 0 1 114 126 Z M314 206 H362 V306 A32 32 0 0 1 330 338 H282 V238 A32 32 0 0 1 314 206 Z" />
+    <path fill="#38BDF8" fill-rule="evenodd" d="M314 206 H398 A32 32 0 0 1 430 238 V390 A32 32 0 0 1 398 422 H314 A32 32 0 0 1 282 390 V238 A32 32 0 0 1 314 206 Z M314 206 H362 V306 A32 32 0 0 1 330 338 H282 V238 A32 32 0 0 1 314 206 Z" />
+  </g>
+  <g font-family="system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif">
+    <text x="536" y="296" fill="#EEEBE6" font-size="128" font-weight="700" letter-spacing="-5">ukacell</text>
+    <text x="540" y="372" fill="#EEEBE6" font-size="34" font-weight="600">Your Tauri v2 frontend on a real phone</text>
+    <text x="540" y="424" fill="#A8A29E" font-size="27">Scan a QR, get hot reload on Android and iOS,</text>
+    <text x="540" y="462" fill="#A8A29E" font-size="27">call 20 native plugins. No native rebuild.</text>
+  </g>
+  <text x="540" y="532" fill="#38BDF8" font-family="ui-monospace, 'Cascadia Code', Consolas, monospace" font-size="30">npx ukacell</text>
+</svg>
