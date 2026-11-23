@@ -139,6 +139,23 @@ button for every plugin) and prints its QR code.
 To verify the download, compare it with the `.sha256` file attached to the
 release: `sha256sum -c ukacell-<version>-universal.apk.sha256`.
 
+#### Updating
+
+Ukacell checks GitHub Releases when it starts (at most every 6 hours) and
+shows **Update available** on the home screen. You can also check by hand
+under **Settings → Updates**. Tap it, then **Update**:
+
+1. The first time, Android asks you to allow Ukacell to *install unknown
+   apps*. Turn it on and come back.
+2. Ukacell downloads the new APK and checks it against the release's
+   `.sha256` file. It also confirms the APK is a newer build of Ukacell.
+3. Android shows its update dialog. Tap **Update**. Your recent servers and
+   settings are kept.
+
+Android only accepts the update if it is signed with the same key as the
+installed app. A debug build from `npm run host:android:dev` therefore
+cannot update to a release APK. Uninstall it first.
+
 With USB debugging you can also run
 `adb install -r ukacell-<version>-universal.apk`.
 
@@ -281,6 +298,12 @@ you care about.
   `10.x.x.x` or `172.16-31.x.x`) can call plugins. Any other origin,
   including `https://` tunnels and public IPs, still loads but every IPC call is
   rejected. The launcher warns before opening such URLs.
+- **In-app updates.** Only the bundled launcher may use the `self-update`
+  plugin (`capabilities/default.json`); dev-server pages cannot. It only
+  downloads from this repository's releases, checks the SHA-256, the package
+  name and that the version is newer, and Android checks the signature. The
+  app declares `REQUEST_INSTALL_PACKAGES` for this. A Google Play build would
+  have to drop both.
 - **What "trusted" means.** Any device on your LAN that serves a page in
   those ranges, and that you open in Ukacell, gets the permissions in the
   table above: location, camera, biometric prompts, clipboard text, app-data

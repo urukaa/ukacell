@@ -12,12 +12,13 @@ apps/host/
 ├── src/                       launcher UI (plain HTML/CSS/JS, no bundler)
 └── src-tauri/
     ├── capabilities/
-    │   ├── default.json       launcher: core + barcode scanner + deep links
+    │   ├── default.json       launcher: core + barcode scanner + deep links + self-update
     │   └── remote-dev.json    dev servers on localhost and private LAN IPs
     ├── icons/
     ├── src/
     │   ├── lib.rs             plugin setup, page-load hook, deep links
     │   ├── floating_menu.js   Reload / Home pill injected into dev pages
+    │   ├── self_update.rs     in-app updates (Rust side of SelfUpdatePlugin.kt)
     │   └── main.rs
     ├── Cargo.toml
     ├── Info.ios.plist         merged into the generated iOS Info.plist
@@ -103,6 +104,7 @@ After patching, the relevant part of
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.FLASHLIGHT" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
     <uses-feature android:name="android.hardware.camera" android:required="false" />
     <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
     <uses-feature android:name="android.hardware.camera.flash" android:required="false" />
@@ -118,6 +120,17 @@ After patching, the relevant part of
 To make the same change by hand, copy those lines into the manifest and set
 `manifestPlaceholders["usesCleartextTraffic"] = "true"` for the `release`
 build type in `app/build.gradle.kts`.
+
+### In-app updates
+
+`gen/android/app/src/main/java/dev/ukacell/host/SelfUpdatePlugin.kt` is
+hand-written and committed with the rest of `gen/android`. `tauri android
+init` leaves it alone, but keep it if you ever delete and regenerate the
+Android project. It downloads the release APK, verifies its SHA-256 and
+version, and opens the system installer through the `FileProvider` that the
+generated manifest already declares. It needs `REQUEST_INSTALL_PACKAGES`,
+which `patch-android.mjs` adds. Google Play does not allow self-updating
+apps, so a Play build would remove the plugin and that permission.
 
 ### Signing a release APK
 

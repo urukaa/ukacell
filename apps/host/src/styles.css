@@ -19,6 +19,7 @@
   --primary: #eeebe6;
   --on-primary: #171615;
   --accent: #38bdf8;
+  --accent-soft: rgba(56, 189, 248, 0.14);
   --ok: #4ade80;
   --ok-soft: rgba(74, 222, 128, 0.14);
   --warn: #fbbf24;
@@ -44,6 +45,7 @@
   --primary: #1c1b19;
   --on-primary: #ffffff;
   --accent: #0ea5e9;
+  --accent-soft: rgba(14, 165, 233, 0.12);
   --ok: #16a34a;
   --ok-soft: rgba(22, 163, 74, 0.12);
   --warn: #b45309;
@@ -814,6 +816,107 @@ body.scanning .toast {
 .toast.error {
   background: var(--danger);
   color: #fff;
+}
+
+/* Updates ---------------------------------------------------------------------- */
+
+.update-banner {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+  animation: fade-in 0.2s ease;
+}
+
+.update-banner:active {
+  transform: scale(0.99);
+}
+
+.update-banner .tile {
+  background: var(--accent-soft);
+  border-color: transparent;
+  color: var(--accent);
+}
+
+.badge.new {
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.update-meta {
+  margin: 0 0 14px;
+  font-size: 14px;
+}
+
+.update-notes {
+  max-height: 32vh;
+  overflow: auto;
+  margin: 0 0 14px;
+  padding: 12px 14px;
+  border-radius: 13px;
+  background: var(--raised);
+  color: var(--ink-2);
+  font-size: 14px;
+  line-height: 1.5;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+.progress {
+  height: 6px;
+  margin: 2px 0 10px;
+  border-radius: 99px;
+  background: var(--raised);
+  overflow: hidden;
+}
+
+.progress-bar {
+  width: 0;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent);
+  transition: width 0.2s ease;
+}
+
+.progress.indeterminate .progress-bar {
+  width: 35%;
+  animation: progress-slide 1.1s ease-in-out infinite;
+}
+
+.update-step {
+  margin: 0 0 16px;
+  font-size: 14px;
+  color: var(--ink-2);
+}
+
+.update-step.error {
+  color: var(--danger);
+}
+
+.row-link.busy .chevron {
+  animation: spin 0.9s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes progress-slide {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(300%);
+  }
 }
 
 /* Opening animation ----------------------------------------------------------- */

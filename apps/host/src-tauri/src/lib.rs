@@ -6,6 +6,8 @@
 //! bundled plugin. Every page that is not the launcher also gets a small
 //! floating menu (Reload / Home) injected from `on_page_load`.
 
+mod self_update;
+
 use std::sync::OnceLock;
 
 use tauri::{
@@ -216,6 +218,7 @@ pub fn run() {
         .plugin(tauri_plugin_http::init())
         .plugin(tauri_plugin_websocket::init())
         .plugin(tauri_plugin_upload::init())
+        .plugin(self_update::init())
         .setup(|app| {
             // Stronghold is an optional feature (see Cargo.toml). It derives
             // vault keys with Argon2; the salt lives in the app's local data

@@ -5,7 +5,8 @@
 // regenerated). It is idempotent: running it twice changes nothing.
 //
 //   1. AndroidManifest.xml
-//      - <uses-permission> for every native API the host exposes
+//      - <uses-permission> for every native API the host exposes, plus
+//        REQUEST_INSTALL_PACKAGES for in-app updates
 //      - optional <uses-feature> entries, so phones without NFC, a flash or a
 //        fingerprint reader can still install the APK
 //      - android:usesCleartextTraffic="true", because dev servers are plain
@@ -33,6 +34,8 @@ const PERMISSIONS = [
   "android.permission.VIBRATE",
   "android.permission.FLASHLIGHT",
   "android.permission.POST_NOTIFICATIONS",
+  // In-app updates (SelfUpdatePlugin.kt). Remove for a Google Play build.
+  "android.permission.REQUEST_INSTALL_PACKAGES",
 ];
 
 const OPTIONAL_FEATURES = [

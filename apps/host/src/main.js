@@ -16,6 +16,13 @@
   const TOAST_DURATION_MS = 3800;
   const SOURCE_URL = "https://github.com/urukaa/ukacell";
 
+  // In-app updates: GitHub Releases is the update feed. The APK download and
+  // install run natively (src-tauri/src/self_update.rs, Android only).
+  const RELEASES_API = "https://api.github.com/repos/urukaa/ukacell/releases/latest";
+  const UPDATE_CACHE_KEY = "ukacell.update.v1";
+  const UPDATE_CHECK_EVERY_MS = 6 * 60 * 60 * 1000;
+  const UPDATE_TIMEOUT_MS = 8000;
+
   // Keep in sync with src-tauri/Cargo.toml and the README plugin table.
   const PLUGINS = [
     { name: "Barcode scanner", js: "barcodeScanner", version: "2.5.3", group: "Hardware", icon: "i-qr-cam", mobileOnly: true },
@@ -88,12 +95,28 @@
     confirmMessage: $("confirm-message"),
     confirmOk: $("confirm-ok"),
     toast: $("toast"),
+    updateBanner: $("update-banner"),
+    updateBannerText: $("update-banner-text"),
+    updateRow: $("update-row"),
+    updateStatus: $("update-status"),
+    updateBadge: $("update-badge"),
+    updateRowIcon: $("update-row-icon"),
+    updateSheet: $("update-sheet"),
+    updateTitle: $("update-title"),
+    updateMeta: $("update-meta"),
+    updateNotes: $("update-notes"),
+    updateProgress: $("update-progress"),
+    updateProgressBar: $("update-progress-bar"),
+    updateStep: $("update-step"),
+    updateLater: $("update-later"),
+    updateGo: $("update-go"),
   };
 
   const isMobileDevice =
     /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ||
     (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
   const scanner = TAURI && TAURI.barcodeScanner && isMobileDevice ? TAURI.barcodeScanner : null;
+  const canSelfUpdate = /Android/i.test(navigator.userAgent) && Boolean(TAURI && TAURI.core && TAURI.core.Channel);
 
   /* Helpers ----------------------------------------------------------------- */
 
@@ -637,13 +660,292 @@
     }
   }
 
-  async function openSource() {
+  async function openExternal(url) {
     try {
-      if (TAURI && TAURI.opener) await TAURI.opener.openUrl(SOURCE_URL);
-      else window.open(SOURCE_URL, "_blank");
+      if (TAURI && TAURI.opener) await TAURI.opener.openUrl(url);
+      else window.open(url, "_blank");
     } catch (error) {
       showToast("Could not open the browser: " + messageOf(error), true);
     }
+  }
+
+  function openSource() {
+    openExternal(SOURCE_URL);
+  }
+
+  /* Updates ------------------------------------------------------------------------ */
+
+  const updates = {
+    current: "",
+    latest: null, // { tag, version, notes, asset: { name, size } | null }
+    checkedAt: 0,
+    state: "idle", // idle | checking | done | error
+    error: "",
+    installing: false,
+    awaitingPermission: false,
+  };
+
+  // "1.2.3" or "v1.2.3-beta.1" -> { parts: [1, 2, 3], pre: "beta.1" }
+  function parseVersion(value) {
+    const match = /^v?(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z.-]+))?$/.exec(String(value || "").trim());
+    if (!match) return null;
+    return { parts: [Number(match[1]), Number(match[2]), Number(match[3])], pre: match[4] || "" };
+  }
+
+  function compareVersions(a, b) {
+    const left = parseVersion(a);
+    const right = parseVersion(b);
+    if (!left || !right) return 0;
+    for (let i = 0; i < 3; i++) {
+      if (left.parts[i] !== right.parts[i]) return left.parts[i] < right.parts[i] ? -1 : 1;
+    }
+    if (left.pre === right.pre) return 0;
+    if (!left.pre) return 1; // 1.0.0 is newer than 1.0.0-beta
+    if (!right.pre) return -1;
+    return left.pre < right.pre ? -1 : 1;
+  }
+
+  function hasUpdate() {
+    return Boolean(updates.current && updates.latest && compareVersions(updates.latest.version, updates.current) > 0);
+  }
+
+  function releasePage(release) {
+    return SOURCE_URL + "/releases/tag/" + encodeURIComponent(release.tag);
+  }
+
+  function formatSize(bytes) {
+    if (!(bytes > 0)) return "";
+    if (bytes < 1024 * 1024) return Math.max(1, Math.round(bytes / 1024)) + " KB";
+    return (bytes / (1024 * 1024)).toFixed(1) + " MB";
+  }
+
+  // GitHub's generated release notes, reduced to plain text for the sheet.
+  function cleanNotes(markdown) {
+    return String(markdown || "")
+      .replace(/\r/g, "")
+      .split("\n")
+      .filter((line) => !/^\s*\*\*Full Changelog\*\*/i.test(line) && !/^\s*<!--/.test(line))
+      .map((line) =>
+        line
+          .replace(/^\s*#+\s*/, "")
+          .replace(/^\s*[*-]\s+/, "• ")
+          .replace(/\*\*(.+?)\*\*/g, "$1")
+          .replace(/`([^`]+)`/g, "$1")
+          .replace(/\[([^\]]+)\]\([^)]*\)/g, "$1")
+          .replace(/\s+by @[\w-]+ in https?:\/\/\S+/g, "")
+          .trimEnd()
+      )
+      .join("\n")
+      .replace(/\n{3,}/g, "\n\n")
+      .trim()
+      .slice(0, 1500);
+  }
+
+  async function fetchLatestRelease() {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), UPDATE_TIMEOUT_MS);
+    try {
+      const response = await fetch(RELEASES_API, {
+        headers: { Accept: "application/vnd.github+json" },
+        cache: "no-store",
+        signal: controller.signal,
+      });
+      if (response.status === 404) return null; // nothing released yet
+      if (response.status === 403 || response.status === 429) throw new Error("GitHub rate limit, try again later");
+      if (!response.ok) throw new Error("GitHub answered " + response.status);
+      const data = await response.json();
+      const tag = String(data.tag_name || "");
+      if (!parseVersion(tag)) return null;
+      const apk = (Array.isArray(data.assets) ? data.assets : []).find(
+        (asset) => asset && /^[A-Za-z0-9._-]+-universal\.apk$/.test(String(asset.name))
+      );
+      return {
+        tag,
+        version: tag.replace(/^v/, ""),
+        notes: String(data.body || ""),
+        asset: apk ? { name: String(apk.name), size: Number(apk.size) || 0 } : null,
+      };
+    } catch (error) {
+      if (error && error.name === "AbortError") throw new Error("GitHub didn't answer in time");
+      throw error;
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  function loadUpdateCache() {
+    try {
+      const cached = JSON.parse(localStorage.getItem(UPDATE_CACHE_KEY) || "null");
+      if (cached && typeof cached.checkedAt === "number") return cached;
+    } catch (error) {
+      // Corrupt or unavailable storage: check again.
+    }
+    return null;
+  }
+
+  function saveUpdateCache() {
+    try {
+      localStorage.setItem(UPDATE_CACHE_KEY, JSON.stringify({ checkedAt: updates.checkedAt, latest: updates.latest }));
+    } catch (error) {
+      // Not critical: the next launch checks again.
+    }
+  }
+
+  function renderUpdates() {
+    const available = hasUpdate();
+    el.updateBanner.hidden = !available;
+    el.updateBadge.hidden = !available;
+    el.updateRowIcon.firstElementChild.setAttribute("href", available ? "#i-chevron" : "#i-refresh");
+    el.updateRow.classList.toggle("busy", updates.state === "checking");
+
+    if (available) {
+      const version = updates.latest.version;
+      el.updateBannerText.textContent =
+        "Ukacell " + version + (canSelfUpdate ? " · tap to install" : " · tap to download");
+      el.updateBadge.className = "badge new";
+      el.updateBadge.textContent = "v" + version;
+      el.updateStatus.textContent = "Version " + version + " is ready to install";
+    } else if (updates.state === "checking") {
+      el.updateStatus.textContent = "Checking…";
+    } else if (updates.state === "error") {
+      el.updateStatus.textContent = "Couldn't check: " + updates.error;
+    } else if (updates.checkedAt) {
+      el.updateStatus.textContent = updates.latest
+        ? "You're on the latest version · checked " + relativeTime(updates.checkedAt)
+        : "No releases published yet";
+    } else {
+      el.updateStatus.textContent = "Check for a newer version";
+    }
+  }
+
+  async function checkForUpdates(manual) {
+    if (updates.state === "checking") return;
+    if (!manual && Date.now() - updates.checkedAt < UPDATE_CHECK_EVERY_MS) return;
+    updates.state = "checking";
+    updates.error = "";
+    renderUpdates();
+    try {
+      updates.latest = await fetchLatestRelease();
+      updates.checkedAt = Date.now();
+      updates.state = "done";
+      saveUpdateCache();
+    } catch (error) {
+      updates.state = "error";
+      updates.error = messageOf(error);
+    }
+    renderUpdates();
+    if (manual && updates.state === "done") {
+      showToast(hasUpdate() ? "Ukacell " + updates.latest.version + " is available." : "You're on the latest version.");
+    } else if (manual) {
+      showToast("Couldn't check for updates: " + updates.error, true);
+    }
+  }
+
+  function setUpdateStep(message, isError) {
+    el.updateStep.textContent = message || "";
+    el.updateStep.hidden = !message;
+    el.updateStep.classList.toggle("error", Boolean(isError));
+  }
+
+  function showUpdateProgress(downloaded, total) {
+    const known = total > 0;
+    el.updateProgress.hidden = false;
+    el.updateProgress.classList.toggle("indeterminate", !known);
+    el.updateProgressBar.style.width = known ? Math.min(100, (downloaded / total) * 100).toFixed(1) + "%" : "";
+    setUpdateStep(
+      known
+        ? "Downloading · " + formatSize(downloaded) + " of " + formatSize(total)
+        : "Downloading · " + (formatSize(downloaded) || "starting")
+    );
+  }
+
+  function openUpdateSheet() {
+    const latest = updates.latest;
+    if (!latest || !hasUpdate()) return;
+    el.updateTitle.textContent = "Ukacell " + latest.version;
+    const meta = ["You have " + updates.current];
+    if (latest.asset && latest.asset.size) meta.push(formatSize(latest.asset.size) + " download");
+    el.updateMeta.textContent = meta.join(" · ");
+    const notes = cleanNotes(latest.notes);
+    el.updateNotes.textContent = notes;
+    el.updateNotes.hidden = !notes;
+    if (!updates.installing) {
+      updates.awaitingPermission = false;
+      el.updateProgress.hidden = true;
+      setUpdateStep(canSelfUpdate && latest.asset ? "" : "The release page opens in your browser.");
+      el.updateGo.textContent = canSelfUpdate && latest.asset ? "Update" : "Open release page";
+      el.updateGo.disabled = false;
+    }
+    el.updateSheet.hidden = false;
+    el.updateGo.focus();
+  }
+
+  function closeUpdateSheet() {
+    el.updateSheet.hidden = true;
+  }
+
+  async function startUpdate() {
+    const latest = updates.latest;
+    if (!latest || updates.installing) return;
+    if (!canSelfUpdate || !latest.asset) {
+      await openExternal(releasePage(latest));
+      return;
+    }
+    const invoke = TAURI.core.invoke;
+    try {
+      // Android asks once per app before it lets Ukacell open the installer.
+      let permission = await invoke("plugin:self-update|can_install");
+      if (!permission.granted) {
+        if (!updates.awaitingPermission) {
+          updates.awaitingPermission = true;
+          setUpdateStep("Android needs your OK first: turn on “Allow from this source” for Ukacell, then come back.");
+          el.updateGo.textContent = "Open settings";
+          return;
+        }
+        permission = await invoke("plugin:self-update|open_install_settings");
+        if (!permission.granted) {
+          setUpdateStep("Installing updates is still off for Ukacell.", true);
+          return;
+        }
+      }
+      updates.awaitingPermission = false;
+      updates.installing = true;
+      el.updateGo.disabled = true;
+      el.updateGo.textContent = "Downloading…";
+      el.updateLater.textContent = "Hide";
+      showUpdateProgress(0, -1);
+
+      const channel = new TAURI.core.Channel();
+      channel.onmessage = (event) => {
+        if (event) showUpdateProgress(Number(event.downloaded) || 0, Number(event.total) || -1);
+      };
+      await invoke("plugin:self-update|install", { tag: latest.tag, asset: latest.asset.name, onProgress: channel });
+
+      el.updateProgress.hidden = true;
+      setUpdateStep("Tap “Update” in the Android dialog. Ukacell restarts on the new version.");
+      el.updateGo.textContent = "Install again";
+    } catch (error) {
+      el.updateProgress.hidden = true;
+      setUpdateStep(messageOf(error), true);
+      el.updateGo.textContent = "Try again";
+    } finally {
+      updates.installing = false;
+      el.updateGo.disabled = false;
+      el.updateLater.textContent = "Later";
+    }
+  }
+
+  function initUpdates() {
+    updates.current = el.aboutVersion.textContent.trim();
+    const cached = loadUpdateCache();
+    if (cached) {
+      updates.checkedAt = cached.checkedAt;
+      updates.latest = cached.latest || null;
+      updates.state = "done";
+    }
+    renderUpdates();
+    // Inside the app only; a plain browser preview has no version to compare.
+    if (TAURI) checkForUpdates(false);
   }
 
   async function clearAllHistory() {
@@ -713,10 +1015,26 @@
       button.addEventListener("click", () => settleConfirm(button.getAttribute("data-confirm") === "ok"));
     });
 
+    el.updateBanner.addEventListener("click", openUpdateSheet);
+    el.updateRow.addEventListener("click", () => {
+      if (hasUpdate()) openUpdateSheet();
+      else checkForUpdates(true);
+    });
+    el.updateGo.addEventListener("click", startUpdate);
+    el.updateSheet.querySelectorAll("[data-update-close]").forEach((button) => {
+      button.addEventListener("click", closeUpdateSheet);
+    });
+    // Coming back to the app after a while: look for a release again
+    // (at most every few hours, see UPDATE_CHECK_EVERY_MS).
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible" && TAURI) checkForUpdates(false);
+    });
+
     document.addEventListener("keydown", (event) => {
       if (event.key !== "Escape") return;
       if (scanning) cancelScan();
       else if (!el.confirmSheet.hidden) settleConfirm(false);
+      else if (!el.updateSheet.hidden) closeUpdateSheet();
     });
 
     window.addEventListener("hashchange", route);
@@ -738,7 +1056,7 @@
     renderApiSummary();
     wireEvents();
     route();
-    renderAbout();
+    renderAbout().then(initUpdates);
     initDeepLinks();
   }
 

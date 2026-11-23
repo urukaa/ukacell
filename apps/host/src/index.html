@@ -54,6 +54,8 @@
         <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 16V4M7 9l5-5 5 5M4 20h16" /></symbol>
         <symbol id="i-cloud" viewBox="0 0 24 24"><path d="M7 18a5 5 0 0 1-.9-9.9A6 6 0 0 1 18 9a4.5 4.5 0 0 1-.5 9Z" /></symbol>
         <symbol id="i-open" viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5" /></symbol>
+        <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 4v11M7 10l5 5 5-5M4 20h16" /></symbol>
+        <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 11a8 8 0 0 0-14.7-4.4M4 4v4h4M4 13a8 8 0 0 0 14.7 4.4M20 20v-4h-4" /></symbol>
       </defs>
     </svg>
 
@@ -96,6 +98,12 @@
       </header>
 
       <main class="content">
+        <button type="button" class="update-banner" id="update-banner" hidden>
+          <span class="tile"><svg class="i"><use href="#i-download" /></svg></span>
+          <span class="row-text"><b>Update available</b><small id="update-banner-text"></small></span>
+          <svg class="i chevron"><use href="#i-chevron" /></svg>
+        </button>
+
         <section class="card connect-card" aria-labelledby="connect-title">
           <h2 id="connect-title">Run your Tauri app here</h2>
           <p class="muted">Scan the QR code from <code>npx ukacell</code>, or type the address.</p>
@@ -165,6 +173,11 @@
               <span class="row-text"><b>Ukacell</b><small>Dev host for Tauri v2</small></span>
               <span class="value mono" id="about-version">0.1.0</span>
             </div>
+            <button type="button" class="row-link" id="update-row">
+              <span class="row-text"><b>Updates</b><small id="update-status">Check for a newer version</small></span>
+              <span class="badge" id="update-badge" hidden></span>
+              <svg class="i chevron" id="update-row-icon"><use href="#i-refresh" /></svg>
+            </button>
             <div class="row-link static">
               <span class="row-text"><b>Tauri</b><small>Runtime</small></span>
               <span class="value mono" id="about-tauri">2</span>
@@ -212,6 +225,22 @@
         <div class="confirm-actions">
           <button type="button" class="btn" data-confirm="cancel">Cancel</button>
           <button type="button" class="btn btn-primary" data-confirm="ok" id="confirm-ok">OK</button>
+        </div>
+      </section>
+    </div>
+
+    <div class="sheet" id="update-sheet" hidden>
+      <div class="sheet-backdrop" data-update-close></div>
+      <section class="sheet-panel" role="dialog" aria-modal="true" aria-labelledby="update-title" aria-describedby="update-meta">
+        <div class="sheet-handle" aria-hidden="true"></div>
+        <h2 id="update-title">Ukacell</h2>
+        <p class="muted update-meta" id="update-meta"></p>
+        <div class="update-notes" id="update-notes" hidden></div>
+        <div class="progress" id="update-progress" hidden><div class="progress-bar" id="update-progress-bar"></div></div>
+        <p class="update-step" id="update-step" role="status" aria-live="polite" hidden></p>
+        <div class="confirm-actions">
+          <button type="button" class="btn" id="update-later" data-update-close>Later</button>
+          <button type="button" class="btn btn-primary" id="update-go">Update</button>
         </div>
       </section>
     </div>
