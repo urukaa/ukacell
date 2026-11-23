@@ -17,6 +17,9 @@
 //   3. build.gradle.kts (root)
 //      - plugins that pin compileSdk below what :tauri-android needs (36) are
 //        raised to the app's compileSdk (tauri-plugin-torch 0.1.0 pins 34)
+//   4. app/proguard-rules.pro
+//      - keep rules for ML Kit, without which the release (R8) build of the
+//        barcode scanner crashes on the camera's first frame
 //
 // Usage: node scripts/patch-android.mjs [--android-dir <path>]
 
@@ -234,13 +237,42 @@ function patchRootGradle(path, appGradlePath) {
   return [];
 }
 
+const PROGUARD_BEGIN = "# >>> ukacell: ML Kit keep rules (managed by scripts/patch-android.mjs)";
+const PROGUARD_END = "# <<< ukacell";
+
+// ML Kit (used by the barcode scanner plugin) wires itself together at runtime
+// through Firebase components found by reflection. R8 in full mode, the AGP
+// default, optimizes that wiring away: the release APK then crashes on the
+// camera's first frame with a NullPointerException ("...Object.getClass() on
+// a null object reference") inside InputImage.fromMediaImage. Debug builds are
+// not shrunk, so they never show it.
+const PROGUARD_BLOCK = `${PROGUARD_BEGIN}
+# ML Kit looks its components up by reflection; without these the release
+# build's barcode scanner crashes on the camera's first frame.
+-keep class com.google.mlkit.** { *; }
+-keep class com.google.android.gms.internal.mlkit_** { *; }
+-keep class com.google.firebase.components.** { *; }
+${PROGUARD_END}
+`;
+
+function patchProguard(path) {
+  const original = readFileSync(path, "utf8");
+  const rules = upsertBlock(path, original, PROGUARD_BEGIN, PROGUARD_END, PROGUARD_BLOCK);
+  if (rules !== original) {
+    writeFileSync(path, rules);
+    return ["ML Kit keep rules"];
+  }
+  return [];
+}
+
 function main() {
   const { androidDir } = parseArgs(process.argv.slice(2));
   const manifestPath = join(androidDir, "app", "src", "main", "AndroidManifest.xml");
   const gradlePath = join(androidDir, "app", "build.gradle.kts");
   const rootGradlePath = join(androidDir, "build.gradle.kts");
+  const proguardPath = join(androidDir, "app", "proguard-rules.pro");
 
-  for (const path of [manifestPath, gradlePath, rootGradlePath]) {
+  for (const path of [manifestPath, gradlePath, rootGradlePath, proguardPath]) {
     if (!existsSync(path)) {
       console.error(`Not found: ${path}`);
       console.error("Run `npm run android:init` (tauri android init) in apps/host first.");
@@ -252,6 +284,7 @@ function main() {
     ...patchManifest(manifestPath),
     ...patchGradle(gradlePath),
     ...patchRootGradle(rootGradlePath, gradlePath),
+    ...patchProguard(proguardPath),
   ];
   if (changes.length === 0) {
     console.log("patch-android: already up to date");

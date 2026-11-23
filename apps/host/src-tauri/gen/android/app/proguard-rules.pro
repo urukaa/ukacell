@@ -19,3 +19,11 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+# >>> ukacell: ML Kit keep rules (managed by scripts/patch-android.mjs)
+# ML Kit looks its components up by reflection; without these the release
+# build's barcode scanner crashes on the camera's first frame.
+-keep class com.google.mlkit.** { *; }
+-keep class com.google.android.gms.internal.mlkit_** { *; }
+-keep class com.google.firebase.components.** { *; }
+# <<< ukacell
