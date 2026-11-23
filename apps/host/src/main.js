@@ -20,6 +20,7 @@
   // install run natively (src-tauri/src/self_update.rs, Android only).
   const RELEASES_API = "https://api.github.com/repos/urukaa/ukacell/releases/latest";
   const UPDATE_CACHE_KEY = "ukacell.update.v1";
+  const LAST_VERSION_KEY = "ukacell.lastVersion";
   const UPDATE_CHECK_EVERY_MS = 6 * 60 * 60 * 1000;
   const UPDATE_TIMEOUT_MS = 8000;
 
@@ -859,9 +860,15 @@
     );
   }
 
+  // The update sheet has two modes: "update" (offer a newer release) and
+  // "whatsnew" (shown once after Ukacell was updated).
+  let sheetMode = "update";
+
   function openUpdateSheet() {
     const latest = updates.latest;
     if (!latest || !hasUpdate()) return;
+    sheetMode = "update";
+    el.updateLater.hidden = false;
     el.updateTitle.textContent = "Ukacell " + latest.version;
     const meta = ["You have " + updates.current];
     if (latest.asset && latest.asset.size) meta.push(formatSize(latest.asset.size) + " download");
@@ -935,6 +942,48 @@
     }
   }
 
+  // After an update: the notes of the release now installed, when the last
+  // update check saw it, otherwise a short toast.
+  function showWhatsNew(previous) {
+    const release = updates.latest;
+    const notes =
+      release && compareVersions(release.version, updates.current) === 0 ? cleanNotes(release.notes) : "";
+    if (!notes) {
+      showToast("Updated to Ukacell " + updates.current);
+      return;
+    }
+    sheetMode = "whatsnew";
+    el.updateTitle.textContent = "Updated to Ukacell " + updates.current;
+    el.updateMeta.textContent = previous ? "Previously " + previous : "Here's what changed";
+    el.updateNotes.textContent = notes;
+    el.updateNotes.hidden = false;
+    el.updateProgress.hidden = true;
+    setUpdateStep("");
+    el.updateLater.hidden = true;
+    el.updateGo.textContent = "Done";
+    el.updateGo.disabled = false;
+    el.updateSheet.hidden = false;
+    el.updateGo.focus();
+  }
+
+  // Remembers the version of every launch; a higher one than last time means
+  // Ukacell was just updated. 0.2.0 did not record its version yet, but it did
+  // cache update checks, so a cache without a recorded version is an update
+  // from 0.2.0 rather than a fresh install.
+  function noticeVersionChange(hadUpdateCache) {
+    let previous = "";
+    try {
+      previous = localStorage.getItem(LAST_VERSION_KEY) || "";
+      localStorage.setItem(LAST_VERSION_KEY, updates.current);
+    } catch (error) {
+      return;
+    }
+    const updated = previous ? compareVersions(updates.current, previous) > 0 : hadUpdateCache;
+    if (!updated) return;
+    // Wait for the opening animation so the message is not hidden behind it.
+    setTimeout(() => showWhatsNew(previous), $("splash") ? 2400 : 300);
+  }
+
   function initUpdates() {
     updates.current = el.aboutVersion.textContent.trim();
     const cached = loadUpdateCache();
@@ -944,8 +993,10 @@
       updates.state = "done";
     }
     renderUpdates();
-    // Inside the app only; a plain browser preview has no version to compare.
-    if (TAURI) checkForUpdates(false);
+    // Inside the app only; a plain browser preview has no real version.
+    if (!TAURI) return;
+    noticeVersionChange(Boolean(cached));
+    checkForUpdates(false);
   }
 
   async function clearAllHistory() {
@@ -1020,7 +1071,10 @@
       if (hasUpdate()) openUpdateSheet();
       else checkForUpdates(true);
     });
-    el.updateGo.addEventListener("click", startUpdate);
+    el.updateGo.addEventListener("click", () => {
+      if (sheetMode === "whatsnew") closeUpdateSheet();
+      else startUpdate();
+    });
     el.updateSheet.querySelectorAll("[data-update-close]").forEach((button) => {
       button.addEventListener("click", closeUpdateSheet);
     });
